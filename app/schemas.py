@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, Union
 from datetime import datetime
 
 
@@ -48,5 +48,19 @@ class UserResponse(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+    model_config = {"from_attributes": True}
+
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+    model_config = {"from_attributes": True}
+
+
+class TokenData(BaseModel):
+    id: Union[int, str]
 
     model_config = {"from_attributes": True}
