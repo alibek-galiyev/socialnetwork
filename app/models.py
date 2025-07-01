@@ -25,3 +25,13 @@ class User(Base):
     password = Column(String, nullable=False)
     created_at = Column(DateTime, server_default=text("now()"), nullable=False)
     is_active = Column(Boolean, server_default="true", nullable=False)
+
+
+class Vote(Base):
+    __tablename__ = "votes"
+
+    post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), primary_key=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, nullable=False)
+
+    post = relationship("Post")
+    user = relationship("User")
