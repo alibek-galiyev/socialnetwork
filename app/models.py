@@ -1,5 +1,6 @@
 from .database import Base
-from sqlalchemy import Column, Integer, String, Boolean, Text, DateTime, text
+from sqlalchemy import Column, Integer, String, Boolean, Text, DateTime, text, ForeignKey
+from sqlalchemy.orm import relationship
 
 
 class Post(Base):
@@ -11,6 +12,9 @@ class Post(Base):
     published = Column(Boolean, server_default="true", nullable=False)
     created_at = Column(DateTime, server_default=text("now()"), nullable=False)
     rating = Column(Integer, nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    
+    owner = relationship("User")
 
 
 class User(Base):

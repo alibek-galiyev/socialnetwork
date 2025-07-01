@@ -1,10 +1,6 @@
-from fastapi import FastAPI, Response, status, HTTPException, Depends
-from psycopg2 import connect, sql
-from psycopg2.extras import RealDictCursor
-from time import sleep
-from . import models, schemas, utils
-from .database import engine, get_db
-from sqlalchemy.orm import Session
+from fastapi import FastAPI
+from . import models
+from .database import engine
 from .routers import post, user, auth
 
 

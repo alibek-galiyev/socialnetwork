@@ -2,14 +2,22 @@ from fastapi import status, HTTPException, Depends, APIRouter, Response
 from .. import models, schemas, oauth2
 from ..database import get_db
 from sqlalchemy.orm import Session
+from typing import Optional
 
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
 @router.get("/", response_model=list[schemas.PostResponse])
-def get_posts_sqlalchemy(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).all()
+def get_posts_sqlalchemy(
+    db: Session = Depends(get_db), 
+    current_user: int = Depends(oauth2.get_current_user),
+    limit: int = 10,
+    skip: int = 0,
+    search: Optional[str] = ""
+    ):
+    posts = db.query(models.Post).filter(models.Post.title.contains(search)).offset(skip).limit(limit).all()
+    # posts = db.query(models.Post).filter(models.Post.owner_id == current_user.id).all()
     return posts
 
 
@@ -39,7 +47,7 @@ def create_posts_sqlalchemy(
     get_current_user: int = Depends(oauth2.get_current_user)
     ):
 
-    new_post = models.Post(**post.model_dump())
+    new_post = models.Post(owner_id=get_current_user.id, **post.model_dump(exclude={"owner_id"}))
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
@@ -90,6 +98,11 @@ def delete_post_sqlalchemy(post_id: int, db: Session = Depends(get_db),
                            get_current_user: int = Depends(oauth2.get_current_user)):
     post = db.query(models.Post).filter(models.Post.id == post_id).first()
     if post:
+        if post.owner_id != get_current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to delete this post"
+            )
         db.delete(post)
         db.commit()
         return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -128,6 +141,11 @@ def update_post_sqlalchemy(
     ):
     existing_post = db.query(models.Post).filter(models.Post.id == post_id).first()
     if existing_post:
+        if existing_post.owner_id != get_current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to update this post"
+            )
         update_data = post.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             if value is not None:
