@@ -2,13 +2,14 @@ from fastapi import status, HTTPException, Depends, APIRouter, Response
 from .. import models, schemas, oauth2
 from ..database import get_db
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import Optional
 
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
-@router.get("/", response_model=list[schemas.PostResponse])
+@router.get("/", response_model=list[schemas.PostVoteResponse])
 def get_posts_sqlalchemy(
     db: Session = Depends(get_db), 
     current_user: int = Depends(oauth2.get_current_user),
@@ -16,9 +17,12 @@ def get_posts_sqlalchemy(
     skip: int = 0,
     search: Optional[str] = ""
     ):
-    posts = db.query(models.Post).filter(models.Post.title.contains(search)).offset(skip).limit(limit).all()
+    # posts = db.query(models.Post).filter(models.Post.title.contains(search)).offset(skip).limit(limit).all()
     # posts = db.query(models.Post).filter(models.Post.owner_id == current_user.id).all()
-    return posts
+    results = db.query(models.Post, func.count(models.Vote.post_id).label("votes")).join(
+        models.Vote, models.Post.id == models.Vote.post_id, isouter=True
+        ).group_by(models.Post.id).filter(models.Post.title.contains(search)).offset(skip).limit(limit).all()
+    return results
 
 
 # @router.get("/posts", response_model=list[schemas.PostResponse])
@@ -67,9 +71,11 @@ def create_posts_sqlalchemy(
 #         )
     
 
-@router.get("/{post_id}", response_model=schemas.PostResponse)
+@router.get("/{post_id}", response_model=schemas.PostVoteResponse)
 def get_post_sqlalchemy(post_id: int, db: Session = Depends(get_db)):
-    post = db.query(models.Post).filter(models.Post.id == post_id).first()
+    post = db.query(models.Post, func.count(models.Vote.post_id).label("votes")).join(
+        models.Vote, models.Post.id == models.Vote.post_id, isouter=True
+        ).group_by(models.Post.id).filter(models.Post.id == post_id).first()
     if post:
         return post
     else:

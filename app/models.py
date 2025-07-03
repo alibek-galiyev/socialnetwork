@@ -22,9 +22,11 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True, nullable=False)
     email = Column(String, unique=True, nullable=False)
+    nickname = Column(String, unique=False, nullable=False, default="Anonymous")
     password = Column(String, nullable=False)
     created_at = Column(DateTime, server_default=text("now()"), nullable=False)
     is_active = Column(Boolean, server_default="true", nullable=False)
+
 
 
 class Vote(Base):

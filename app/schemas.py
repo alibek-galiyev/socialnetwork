@@ -5,6 +5,7 @@ from datetime import datetime
 
 class UserCreate(BaseModel):
     email: EmailStr
+    nickname: Optional[str] = "Anonymous"
     password: str
 
     model_config = {"from_attributes": True}
@@ -12,6 +13,7 @@ class UserCreate(BaseModel):
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
+    nickname: Optional[str] = "Anonymous"
 
     model_config = {"from_attributes": True}
 
@@ -19,6 +21,13 @@ class UserResponse(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+    model_config = {"from_attributes": True}
+    
+
+class Vote(BaseModel):
+    post_id: int
+    dir: conint(ge=0, le=1)
 
     model_config = {"from_attributes": True}
 
@@ -52,6 +61,13 @@ class PostResponse(BaseModel):
     published: bool
     owner_id: Optional[int] = None
     owner: UserResponse
+    
+    model_config = {"from_attributes": True}
+
+
+class PostVoteResponse(BaseModel):
+    Post: PostResponse
+    votes: int
 
     model_config = {"from_attributes": True}
 
@@ -70,8 +86,3 @@ class TokenData(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class Vote(BaseModel):
-    post_id: int
-    dir: conint(ge=0, le=1)
-
-    model_config = {"from_attributes": True}
